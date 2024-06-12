@@ -1,6 +1,8 @@
-// require('dotenv').config(); // works
-// import 'dotenv/config'; //works 
-import dotenv from 'dotenv'; // works
+// require('dotenv').config(); // works -> loads .env variables from .env file
+// import 'dotenv/config'; //works -> loads .env variables from .env file
+import dotenv from 'dotenv'; // works -> loads .env variables from .env file
+// dotenv.config({path: '.env'}); // path is optional
+// dotenv.config({path: ['.env', '.env.production']}); // loads env. variables from multiple files
 dotenv.config();
 
 import connectDB from './db/index.js';
@@ -20,6 +22,7 @@ connectDB()
 })
 .catch((error) => {
     console.log('MONGODB connection failed !!!', error);
+    process.exit(1);
 })
 
 
