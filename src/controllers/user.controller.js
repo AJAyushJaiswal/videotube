@@ -136,7 +136,7 @@ export const logoutUser = asyncHandler( async (req, res) => {
     );
     
     if(!updatedUser){
-        throw new ApiError(501, "Something went wrong!");
+        throw new ApiError(500, "Something went wrong!");
     }
 
     //TODO: delete accessToken & refreshToken cookies stored on the client
@@ -144,9 +144,9 @@ export const logoutUser = asyncHandler( async (req, res) => {
         httpOnly: true,
         secure: true
     }
-    
+
     return res.status(200)
     .clearCookie('accessToken', options)
     .clearCookie('refreshToken', options)
-    .json(200, {}, "User logged out");
+    .json(new ApiResponse(200, null, "User logged out"));
 })
