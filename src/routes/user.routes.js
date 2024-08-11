@@ -25,17 +25,17 @@ router.route('/logout').post(verifyJWT, logoutUser);
 
 router.route('/change-password').post(verifyJWT, changeCurrentPassword);
 
-router.route('/').get(verifyJWT, getCurrentUser);
+router.route('/get-current-user').get(verifyJWT, getCurrentUser);
 
-router.route('/update/account').post(verifyJWT, updateAccountDetails);
+router.route('/update-account').post(verifyJWT, updateAccountDetails);
 
-router.route('/update/avatar').post(
+router.route('/update-avatar').post(
     verifyJWT,
     upload.single('avatar'), 
     updateUserAvatar
 )
 
-router.route('/update/cover-image').post(
+router.route('/update-cover-image').post(
     verifyJWT,
     upload.single('coverImage'), 
     updateUserCoverImage

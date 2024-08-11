@@ -4,11 +4,13 @@ import fs from 'fs';
 
 dotenv.config();
 
+
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
+
 
 const uploadOnCloudinary = async (localFilePath) => {
     try{
@@ -35,4 +37,28 @@ const uploadOnCloudinary = async (localFilePath) => {
 }
 
 
-export {uploadOnCloudinary}
+const deleteFromCloudinary = async (url) => {
+    try{
+        if(!url) return null;
+        // "http://res.cloudinary.com/cloudburst/image/upload/v1722673407/dgt4h8zknlcmv9ujmu9v.jpg"
+        // "http://res.cloudinary.com/{process.env.CLOUDINARY_CLOUD_NAME}/{resource_type}/{type}/  /{public_id}.extension"
+
+        const publicId = url.substring(url.lastIndexOf('/')+1).split('.')[0];
+
+        const fileDeleted = await cloudinary.uploader.destroy(publicId);
+        
+        if(!fileDeleted || fileDeleted.result !== 'ok'){
+            throw new Error('Error deleting file from cloudinary!');
+        }
+
+        return fileDeleted;
+    }
+    catch(error){
+        console.log(error);
+        
+        return null;
+    }
+};
+
+
+export {uploadOnCloudinary, deleteFromCloudinary}

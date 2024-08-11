@@ -1,9 +1,10 @@
 import {asyncHandler} from '../utils/asyncHandler.js';
 import {ApiError} from '../utils/ApiError.js';
 import {User} from '../models/user.model.js';
-import { uploadOnCloudinary } from '../utils/cloudinary.js';
+import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
+
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -22,6 +23,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
         throw new ApiError(500, "Error generating access and refresh tokens");
     }
 }
+
 
 
 export const registerUser = asyncHandler( async (req, res) => {
@@ -79,12 +81,12 @@ export const registerUser = asyncHandler( async (req, res) => {
     );
     
     if(!userCreated){
-        throw new ApiError(500, "Something went wrong while registering the user");
+        throw new ApiError(500, "Error while registering the user");
     }
 
     
     return res.status(201).json(
-        new ApiResponse(201, userCreated, "User registered successfully!")
+        new ApiResponse(201, {user: userCreated}, "User registered successfully!")
     );
 });
 
@@ -207,6 +209,8 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 });
 
+
+
 export const changeCurrentPassword = asyncHandler(async (req, res) => {
     const {oldPassword, newPassword, confirmPassword} = req.body;
 
@@ -240,18 +244,27 @@ export const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 
+
 export const getCurrentUser = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, {user: req.user}, "Current user fetched successfully"));
 });
 
 
+
 export const updateAccountDetails = asyncHandler(async (req, res) => {
     const {email, fullName} = req.body;
     
-    if(!fullName || !email){
+    if(!fullName || !email || !fullName.trim() || !email.trim()){
         throw new ApiError(400, "All fields are required");
     }
     
+    
+    const user = await User.findOne({email});
+    
+    if(user && !user._id.equals(req.user._id)){
+        throw new ApiError(401, "User with this email already exists");
+    }
+
 
     const updatedUser = await User.findByIdAndUpdate(
         req.user?._id, 
@@ -265,11 +278,13 @@ export const updateAccountDetails = asyncHandler(async (req, res) => {
     ).select("-password -refreshToken -updatedAt");
     
     if(!updatedUser){
-        throw new ApiError(500, "Failed to update account details");
+        throw new ApiError(500, "Error updating account details in database");
     }
-    
+
+
     return res.status(200).json(new ApiResponse(200, {user: updatedUser}, "Account details updated successfully"));
 });
+
 
 
 export const updateUserAvatar = asyncHandler(async (req, res) => {
@@ -278,18 +293,23 @@ export const updateUserAvatar = asyncHandler(async (req, res) => {
     if(!avatarLocalPath){
         throw new ApiError(400, "Avatar file is missing");
     }
-    
+
 
     const avatar = await uploadOnCloudinary(avatarLocalPath);
     
     if(!avatar.url){
-        throw new ApiError(500, "Error while uplaoding avatar");
+        throw new ApiError(500, "Error while uplaoding new avatar file to cloudinary");
     }
     
 
     const oldAvatar = req.user.avatar;
+    const deleteAvatar = await deleteFromCloudinary(oldAvatar);
 
+    if(!deleteAvatar){
+        throw new ApiError(500, "Error deleting the old avatar from cloudinary");
+    }
     
+
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
@@ -299,10 +319,15 @@ export const updateUserAvatar = asyncHandler(async (req, res) => {
         },
         {new: true}
     ).select("-password -refreshToken -updatedAt");
+
+    if(!user){
+        throw new Error(500, "Error updating avatar in database");
+    }
     
 
     res.status(200).json(new ApiResponse(200, user, "Avatar updated successfully"));
 });
+
 
 
 export const updateUserCoverImage = asyncHandler(async (req, res) => {
@@ -311,18 +336,23 @@ export const updateUserCoverImage = asyncHandler(async (req, res) => {
     if(!coverImageLocalPath){
         throw new ApiError(400, "Cover image file is missing");
     }
-    
+
 
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
     
     if(!coverImage.url){
-        throw new ApiError(500, "Error while uplaoding cover image");
+        throw new ApiError(500, "Error while uplaoding new cover image to cloudinary");
+    }
+
+
+    const oldCoverImage = req.user.coverImage;
+    const deleteCoverImage = await deleteFromCloudinary(oldCoverImage);
+
+    if(!deleteCoverImage){
+        throw new ApiError(500, "Error deleting old cover image from cloudinary");
     }
     
 
-    const oldCoverImage = req.user.coverImage;
-
-    
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
@@ -332,6 +362,11 @@ export const updateUserCoverImage = asyncHandler(async (req, res) => {
         },
         {new: true}
     ).select("-password -refreshToken -updatedAt");
+
+    
+    if(!user){
+        throw new Error(500, "Error updating cover image in database");
+    }
 
 
     res.status(200).json(new ApiResponse(200, user, "Cover image updated successfully"));
