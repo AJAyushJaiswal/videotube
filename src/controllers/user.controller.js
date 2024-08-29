@@ -5,6 +5,7 @@ import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js
 import { ApiResponse } from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
 import {Subscription} from '../models/subscription.model.js';
+import mongoose from 'mongoose';
 
 
 
@@ -97,11 +98,11 @@ export const loginUser = asyncHandler(async (req, res) => {
     // TODO: check if username or email is present in request
     const {email, username, password} = req.body;
 
-    if(!(username || email)){
+    if(!(username?.trim() || email?.trim())){
         throw new ApiError(400, "username or email required");
     }
     
-    if(!password){
+    if(!password?.trim()){
         throw new ApiError(400, "password is required");
     }
 
@@ -142,9 +143,9 @@ export const logoutUser = asyncHandler( async (req, res) => {
     //TODO: get user from request and reset refreshToken of user in the database - (user has been added to req object by verifyJWT middleware)
     const updatedUser = await User.findByIdAndUpdate(req.user._id, 
         {
-            $set: {refreshToken: ''}
+            $unset: {refreshToken: 1}
         },
-        { new: true}
+        {new: true}
     );
     
     if(!updatedUser){
@@ -167,7 +168,7 @@ export const logoutUser = asyncHandler( async (req, res) => {
 
 export const refreshAccessToken = asyncHandler(async (req, res) => {
     try{
-        const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+        const incomingRefreshToken = req?.cookies?.refreshToken || req?.body?.refreshToken;
         
         if(!incomingRefreshToken){
             throw new ApiError(401, "Unauthorised request");
@@ -215,7 +216,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
 export const changeCurrentPassword = asyncHandler(async (req, res) => {
     const {oldPassword, newPassword, confirmPassword} = req.body;
 
-    if(!oldPassword || !newPassword || !confirmPassword){
+    if(!oldPassword?.trim() || !newPassword?.trim() || !confirmPassword?.trim()){
         throw new ApiError(401, "All fields are required");
     }
     
@@ -255,7 +256,7 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
 export const updateAccountDetails = asyncHandler(async (req, res) => {
     const {email, fullName} = req.body;
     
-    if(!fullName || !email || !fullName.trim() || !email.trim()){
+    if(!fullName?.trim() || !email?.trim()){
         throw new ApiError(400, "All fields are required");
     }
     
@@ -289,7 +290,7 @@ export const updateAccountDetails = asyncHandler(async (req, res) => {
 
 
 export const updateUserAvatar = asyncHandler(async (req, res) => {
-    const avatarLocalPath = req.file?.path;
+    const avatarLocalPath = req?.file?.path;
     
     if(!avatarLocalPath){
         throw new ApiError(400, "Avatar file is missing");
@@ -332,7 +333,7 @@ export const updateUserAvatar = asyncHandler(async (req, res) => {
 
 
 export const updateUserCoverImage = asyncHandler(async (req, res) => {
-    const coverImageLocalPath = req.file?.path;
+    const coverImageLocalPath = req?.file?.path;
     
     if(!coverImageLocalPath){
         throw new ApiError(400, "Cover image file is missing");
@@ -376,22 +377,22 @@ export const updateUserCoverImage = asyncHandler(async (req, res) => {
 
 
 export const getUserChannelProfile = asyncHandler( async (req, res) => {
-    const {channelname} = req.params;
+    const {channelname} = req?.params;
     console.log(channelname);
     
     if(!channelname?.trim()){
-        throw new ApiError(400, "Channel name is required");
+        throw new ApiError(400, "Channel name is required!");
     }
     
     if(!await User.exists({username: channelname})){
-        throw new ApiError(404, "Channel doesn't exist");
+        throw new ApiError(404, "Channel not found!");
     }
     
 
     const channel = await User.aggregate([
         {
             $match: {
-                username: channelname?.toLowerCase()
+                username: channelname.trim().toLowerCase()
             }
         },
         {
@@ -413,7 +414,7 @@ export const getUserChannelProfile = asyncHandler( async (req, res) => {
         {
             $addFields: {
                 subscribersCount: {
-                    $size: '$subscibers' 
+                    $size: '$subscribers' 
                 },
                 channelsSubscribedToCount: {
                     $size: '$subscribedTo'
@@ -444,8 +445,8 @@ export const getUserChannelProfile = asyncHandler( async (req, res) => {
     ]);
     console.log(channel); 
     
-    if(channel?.length){
-        throw new ApiError(500, "Error while fetching the channel");
+    if(channel.length === 0){
+        throw new ApiError(404, "Channel not found!");
     }
     
 
@@ -454,7 +455,7 @@ export const getUserChannelProfile = asyncHandler( async (req, res) => {
 
 
 export const getWatchHistory = asyncHandler(async (req, res) => {
-    const user = User.aggregate([
+    const user = await User.aggregate([
         {
             $match: {
                 _id: new mongoose.Types.ObjectId(req.user._id)
@@ -497,6 +498,5 @@ export const getWatchHistory = asyncHandler(async (req, res) => {
     ]);
     
 
-    res.status(200).
-    json(new ApiResponse(200, user[0].watchHistory, "Watch history fetched successfully!"));
+    return res.status(200).json(new ApiResponse(200, user[0].watchHistory, "Watch history fetched successfully!"));
 });
