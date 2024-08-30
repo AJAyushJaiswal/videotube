@@ -97,7 +97,7 @@ const togglePostLike = asyncHandler(async (req, res) => {
 
 
 const getLikedVideos = asyncHandler(async (req, res) => {
-    const likedVideos = await User.aggregate([
+/*     const likedVideos = await User.aggregate([
         {
             $match: {
                 _id: req.user._id
@@ -121,7 +121,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                 ]
             }
         }
-    ]);
+    ]); */
 });
 
 
