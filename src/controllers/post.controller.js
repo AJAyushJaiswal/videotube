@@ -41,7 +41,7 @@ const updatePost = asyncHandler(async (req, res) => {
        throw new ApiError(401, "Unauthorised request!"); 
     }
     
-    const updatedPost = await Post.findByIdAndUpdate(postId, {content}, {new: true}).lean();
+    const updatedPost = await Post.findByIdAndUpdate(postId, {$set: {content}}, {new: true}).lean();
     if(updatedPost){
         throw new ApiError(400, "Error updating the post!");
     }
