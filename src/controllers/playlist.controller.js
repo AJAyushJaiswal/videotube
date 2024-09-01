@@ -40,6 +40,11 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     }
     
     const updatedPlaylist = await Playlist.findByIdAndUpdate(playlistId, {$push: {vidoes: videoId}}, {new: true}).lean();
+    if(!updatedPlaylist){
+        throw new ApiError(400, "Error adding video to playlist!");
+    }
+    
+    return res.status(200).json(new ApiResponse(200, {playlist: updatePlaylist}, "Video added to playlist!"));
 });
 
 
