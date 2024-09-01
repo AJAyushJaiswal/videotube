@@ -138,3 +138,6 @@ const deletePlaylist = asyncHandler(async (req, res) => {
 
 
 
+const getUserChannelPlaylists = asyncHandler(async (req, res) => {
+    
+});
