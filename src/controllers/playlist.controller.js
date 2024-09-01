@@ -6,6 +6,19 @@ import {Video} from '../utils/ApiResponse.js';
 
 
 
+const getPlaylistById = asyncHandler(async (req, res) => {
+    const {playlistId} = req.params;
+
+    const playlist = await Playlist.findById(playlistId).lean();
+    if(!playlist){
+        throw new ApiError(404, "Playlist not found!");
+    }
+    
+    return res.status(200).json(new ApiResponse(200, playlist, "Playlist fetched successfully!"));
+});
+
+
+
 const createPlaylist = asyncHandler(async (req, res) => {
     const {name, description} = req.body;
     if(!name?.trim() || !description?.trim()){
@@ -105,3 +118,23 @@ const updatePlaylist = asyncHandler(async (req, res) => {
     
     return res.status(200).json(new ApiResponse(200, {playlist: updatedPlaylist}, "Playlist updated successfully!"));
 });
+
+
+
+const deletePlaylist = asyncHandler(async (req, res) => {
+    const {playlistId} = req.params;
+
+    const playlist = await Playlist.findById(playlistId).lean();
+    if(!playlist){
+        throw new ApiError(400, "Playlist not found!");
+    }
+    
+    if(playlist.owner !== req.user._id){
+        throw new ApiError(401, "Unauthorised request!");
+    }
+    
+    res.status(200).json(new ApiResponse(200, null, "Playlist deleted successfully!"));
+});
+
+
+
