@@ -28,8 +28,8 @@ const publishVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Video is required!");
     }
     
-    const thumbnailUpload = uploadOnCloudinary(thumbnailLocalPath);
-    const videoUpload = uploadOnCloudinary(videoLocalPath);
+    const thumbnailUpload = await uploadOnCloudinary(thumbnailLocalPath);
+    const videoUpload = await uploadOnCloudinary(videoLocalPath);
 
     if(!thumbnailUpload){
         throw new ApiError(500, "Error uploading thumbail to cloudinary!");
@@ -93,7 +93,7 @@ const updateVideoThumbnail = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Thumbnail is required!");
     }
     
-    const thumbnail = uploadOnCloudinary(thumbnailLocalPath);
+    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
     if(!thumbnail){
         throw new ApiError(500, "Error uploading thumbnail to cloudinary!");
     }
@@ -103,7 +103,7 @@ const updateVideoThumbnail = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Error updating thumbnail in database!");
     }
 
-    const deleteThumbnail = deleteFromCloudinary(video.thumbnail);
+    const deleteThumbnail = await deleteFromCloudinary(video.thumbnail);
     if(!deleteThumbnail){
         throw new ApiError(500, "Error deleting thumbnail from cloudinary!");
     }
@@ -111,3 +111,36 @@ const updateVideoThumbnail = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, {video: updatedVideo}, "Thumbnail updated successfully!"));
 });
 
+
+
+const deleteVideo = asyncHandler(async (req, res) => {
+    const {videoId} = req.params;
+    
+    const video = await Video.findById(videoId).lean();
+
+    if(!video){
+        throw new ApiError(400, "Video not found!");
+    }
+    
+    if(video.owner !== req.user._id){
+        throw new ApiError(400, "Unauthorised request!");
+    }
+    
+    const deleteVideo = await Video.findByIdAndDelete(videoId);
+    if(!deleteVideo){
+        throw new ApiError(500, "Error deleting video from database!");
+    }
+    
+    const deleteThumbnailFromCloudinary = await deleteFromCloudinary(video.thumbnail);
+    const deleteVideoFromCloudinary = await deleteFromCloudinary(video.videoFile);
+    
+    if(!deleteThumbnailFromCloudinary){
+        throw new ApiError(500, "Error deleting thumbnail from cloudinary!");
+    }
+
+    if(!deleteVideoFromCloudinary){
+        throw new ApiError(500, "Error deleting video from cloudinary!");
+    }
+    
+    return res.status(200).json(new ApiResponse(200, null, "Video deleted successfully!"));
+});
