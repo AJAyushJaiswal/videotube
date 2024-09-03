@@ -15,7 +15,7 @@ const getVideoById = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Video not found!");
     }
     
-    res.status(200).json(new ApiResponse(200, video, "Video fetched successfully!"));
+    return res.status(200).json(new ApiResponse(200, video, "Video fetched successfully!"));
 });
 
 
@@ -157,4 +157,22 @@ const deleteVideo = asyncHandler(async (req, res) => {
     }
     
     return res.status(200).json(new ApiResponse(200, null, "Video deleted successfully!"));
+});
+
+
+
+const togglePublishStatus = asyncHandler(async (req, res) => {
+    const {videoId} = req.params;
+
+    const result = await Video.updateOne({_id: videoId}, {$bit: {isPublished: {xor: 1}}});                
+
+    if(result.matchedCount === 0){
+        throw new ApiError(404, "Video not found!");        
+    }
+    
+    if(result.modifiedCount === 0){
+        throw new ApiError(400, "Error changing publish status of the video!");
+    }
+    
+    return res.status(200).json(new ApiResponse(200, null, "Video publish status changed successfully!"));
 });
