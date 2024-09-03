@@ -7,11 +7,11 @@ const router = Router();
 
 router.use(verifyJWT);
 
-
-router.route('/toggle/v/:videoId').post(toggleVideoLike);
-router.route('/toggle/c/:commentId').post(toggleCommentLike);
-router.route('/toggle/p/:videoId').post(togglePostLike);
+router.route('/toggle/v/:videoId').patch(toggleVideoLike);
+router.route('/toggle/c/:commentId').patch(toggleCommentLike);
+router.route('/toggle/p/:videoId').patch(togglePostLike);
 
 router.route('/videos').get(getLikedVideos);
+
 
 export default router;
