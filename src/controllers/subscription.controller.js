@@ -37,7 +37,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
 
 
-const getUserChannelSubscribers = asyncHandler(async (req, res) => {
+const getChannelSubscribers = asyncHandler(async (req, res) => {
     const {channelId} = req.params;
     if(!channelId){
         throw new ApiError(404, "Channel not found!");
@@ -112,3 +112,11 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 
 const getUserSubscribedChannels = asyncHandler(async (req, res) => {
 });
+
+
+
+export {
+    toggleSubscription,
+    getChannelSubscribers,
+    getUserSubscribedChannels
+}
