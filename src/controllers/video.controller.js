@@ -191,5 +191,6 @@ export {
     updateVideoDetails,
     updateVideoThumbnail,
     deleteVideo,
+    togglePublishStatus,
     getAllVideos
 }
