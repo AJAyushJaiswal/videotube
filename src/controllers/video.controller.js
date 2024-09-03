@@ -6,6 +6,20 @@ import {ApiResponse} from '../utils/ApiResponse.js';
 
 
 
+const getVideoById = asyncHandler(async (req, res) => {
+    const {videoId} = req.params;
+    
+    const video = await Video.findById(videoId).lean();
+    
+    if(!video){
+        throw new ApiError(404, "Video not found!");
+    }
+    
+    res.status(200).json(new ApiResponse(200, video, "Video fetched successfully!"));
+});
+
+
+
 const publishVideo = asyncHandler(async (req, res) => {
     const {title, description} = req.body;
     
