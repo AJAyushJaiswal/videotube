@@ -16,7 +16,7 @@ router.route('/:playlistId/v/:videoId')
 .patch(verifyJWT, addVideoToPlaylist)
 .patch(verifyJWT, removeVideoFromPlaylist);
 
-router.route('/user/:userId').get(getUserChannelPlaylists);
+router.route('/u/:userId').get(getUserChannelPlaylists);
 
 
 export default router;
