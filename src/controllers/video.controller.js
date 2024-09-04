@@ -72,11 +72,11 @@ const publishVideo = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Error publishing the video!");
     }
 
-    return res.status(200).json(new ApiResponse(200, video, "Video published successfully!"));
+    return res.status(200).json(new ApiResponse(200, {video}, "Video published successfully!"));
 });
 
 
-
+// tested using postman -- fixed bugs -- working fine
 const updateVideoDetails = asyncHandler(async (req, res) => {
     const {videoId} = req.params;
     const {title, description} = req.body;
@@ -93,7 +93,8 @@ const updateVideoDetails = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid video id!");
     }
     
-    const video = await Video.findById(videoId).lean();
+    const video = await Video.findById(videoId).select('owner -_id').lean();
+    console.log(video);
     
     if(!video){
         throw new ApiError(404, "Video not found!");
@@ -109,40 +110,50 @@ const updateVideoDetails = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Error updating video details!");
     }
     
-    res.status(200).json(new ApiResponse(200, updatedVideo, "Video details updated successfully!"));
+    res.status(200).json(new ApiResponse(200, {video: updatedVideo}, "Video details updated successfully!"));
 });
 
 
+// tested using postman -- fixed bugs -- working fine
 const updateVideoThumbnail = asyncHandler(async (req, res) => {
     const {videoId} = req.params;
+
+    if(!videoId || !isValidObjectId(videoId)){
+        throw new ApiError(400, "Invalid video id!");
+    }
     
-    const video = await Video.findById(videoId).lean();
+    const video = await Video.findById(videoId).select('owner thumbnail -_id').lean();
+
     if(!video){
         throw new ApiError(404, "Video not found!");
     }
     
-    if(video.owner !== req.user._id){
+    if(!video.owner.equals(req.user._id)){
         throw new ApiError(401, "Unauthorised request!");
     } 
     
-    const thumbnailLocalPath = req.files?.thumbnail[0]?.path;
+    const thumbnailLocalPath = req.file?.path;
+
     if(!thumbnailLocalPath){
         throw new ApiError(400, "Thumbnail is required!");
     }
     
     const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+
     if(!thumbnail){
-        throw new ApiError(500, "Error uploading thumbnail to cloudinary!");
+        throw new ApiError(500, "Error uploading the new thumbnail!");
     }
     
-    const updatedVideo = await Video.findByIdAndUpdate(videoId, {$set: {thumbnail}}).lean();
+    const updatedVideo = await Video.findByIdAndUpdate(videoId, {$set: {thumbnail: thumbnail.url}}).select('-updatedAt -__v').lean();
+
     if(!updatedVideo){
-        throw new ApiError(500, "Error updating thumbnail in database!");
+        throw new ApiError(500, "Error updating the thumbnail!");
     }
 
     const deleteThumbnail = await deleteFromCloudinary(video.thumbnail);
+
     if(!deleteThumbnail){
-        throw new ApiError(500, "Error deleting thumbnail from cloudinary!");
+        throw new ApiError(500, "Error deleting the old thumbnail!");
     }
     
     return res.status(200).json(new ApiResponse(200, {video: updatedVideo}, "Thumbnail updated successfully!"));
