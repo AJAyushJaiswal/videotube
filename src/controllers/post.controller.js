@@ -1,7 +1,7 @@
 import {asyncHandler} from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import {Post} from '../models/post.model.js';
-import { ApiResponse } from "../utils/ApiResponse";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 const createPost = asyncHandler(async (req, res) => {
     const {content} = req.body;

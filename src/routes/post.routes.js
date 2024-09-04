@@ -14,3 +14,6 @@ router.route('/')
 router.route('/:postId')
 .patch(updatePost)
 .delete(deletePost);
+
+
+export default router;

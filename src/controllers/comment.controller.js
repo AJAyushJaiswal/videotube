@@ -2,7 +2,7 @@ import {asyncHandler} from '../utils/asyncHandler.js';
 import {ApiError} from '../utils/ApiError.js';
 import {Video} from '../models/video.model.js';
 import {Comment} from '../models/comment.model.js';
-import { ApiResponse } from '../utils/ApiResponse';
+import { ApiResponse } from '../utils/ApiResponse.js';
 
 
 
@@ -88,7 +88,7 @@ const deleteComment = asyncHandler(async (req, res) => {
 
 export {
     getVideoComments,
-    createComment,
+    addComment,
     updateComment,
     deleteComment
 }
