@@ -1,15 +1,20 @@
 import {asyncHandler} from '../utils/asyncHandler.js';
+import { isValidObjectId } from 'mongoose';
 import {ApiError} from '../utils/ApiError.js';
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js';
 import {Video} from '../models/video.model.js';
 import {ApiResponse} from '../utils/ApiResponse.js';
 
 
-
+// tested using postman -- fixed errors - working properly
 const getVideoById = asyncHandler(async (req, res) => {
     const {videoId} = req.params;
     
-    const video = await Video.findById(videoId).lean();
+    if(!videoId || !isValidObjectId(videoId)){
+        throw new ApiError(400, "Invalid video id!");
+    }
+    
+    const video = await Video.findById(videoId).select('-updatedAt -__v').lean();
     
     if(!video){
         throw new ApiError(404, "Video not found!");
@@ -45,8 +50,6 @@ const publishVideo = asyncHandler(async (req, res) => {
 
     const thumbnailUpload = await uploadOnCloudinary(thumbnailLocalPath);
     const videoUpload = await uploadOnCloudinary(videoLocalPath);
-    console.log(thumbnailUpload);
-    console.log(videoUpload);
 
     if(!thumbnailUpload){
         throw new ApiError(500, "Error uploading the thumbail!");
@@ -63,7 +66,7 @@ const publishVideo = asyncHandler(async (req, res) => {
         thumbnail: thumbnailUpload.url, 
         duration: videoUpload.duration, 
         owner: req.user._id
-    });
+    }).select('-updatedAt -__v');
     
     if(!video){
         throw new ApiError(500, "Error publishing the video!");
