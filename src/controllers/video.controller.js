@@ -79,22 +79,32 @@ const publishVideo = asyncHandler(async (req, res) => {
 
 const updateVideoDetails = asyncHandler(async (req, res) => {
     const {videoId} = req.params;
-    const {title, thumbnail} = req.body;
+    const {title, description} = req.body;
    
-    if(!title?.trim() || !thumbnail?.trim()){
-        throw new ApiError(400, "Title and description are required!");
+    if(!title?.trim()){
+        throw new ApiError(400, "Title is required!");
+    }
+    
+    if(!description?.trim()){
+        throw new ApiError(400, "Description is required!");
+    }
+    
+    if(!videoId || !isValidObjectId(videoId)){
+        throw new ApiError(400, "Invalid video id!");
     }
     
     const video = await Video.findById(videoId).lean();
+    
     if(!video){
         throw new ApiError(404, "Video not found!");
     }
     
-    if(video.owner !== req.user._id){
+    if(!video.owner.equals(req.user._id)){
         throw new ApiError(401, "Unauthorised request!");
     }
     
-    const updatedVideo = await Video.findByIdAndUpdate(videoId, {$set: {title, description}}, {new: true}).lean();
+    const updatedVideo = await Video.findByIdAndUpdate(videoId, {$set: {title, description}}, {new: true}).select('-updatedAt -__v').lean();
+
     if(!updatedVideo){
         throw new ApiError(500, "Error updating video details!");
     }
