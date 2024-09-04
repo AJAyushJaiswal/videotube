@@ -20,6 +20,7 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 
 
+// tested using postman -- fixed bugs -- working properly
 const publishVideo = asyncHandler(async (req, res) => {
     const {title, description} = req.body;
     
@@ -27,12 +28,12 @@ const publishVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Title is required!");
     }
     
-    if(!description.trim()){
+    if(!description?.trim()){
         throw new ApiError(400, "Description is required!");
     }
     
-    const thumbnailLocalPath = req.files?.thumbnail[0]?.path; 
-    const videoLocalPath = req.files?.video[0]?.path; 
+    const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path; 
+    const videoLocalPath = req.files?.video?.[0]?.path; 
     
     if(!thumbnailLocalPath){
         throw new ApiError(400, "Thumbnail is required!");
@@ -41,25 +42,34 @@ const publishVideo = asyncHandler(async (req, res) => {
     if(!videoLocalPath){
         throw new ApiError(400, "Video is required!");
     }
-    
+
     const thumbnailUpload = await uploadOnCloudinary(thumbnailLocalPath);
     const videoUpload = await uploadOnCloudinary(videoLocalPath);
+    console.log(thumbnailUpload);
+    console.log(videoUpload);
 
     if(!thumbnailUpload){
-        throw new ApiError(500, "Error uploading thumbail to cloudinary!");
+        throw new ApiError(500, "Error uploading the thumbail!");
     }
 
     if(!videoUpload){
-        throw new ApiError(500, "Error uploading video to cloudinary!");
+        throw new ApiError(500, "Error uploading the video!");
     }
-    
-    const video = await Video.create({title, description, videoFile: videoUpload.url, thumbnail: thumbnailUpload.url, duration: videoUpload.duration, owner: req.user._id}).lean();
+
+    const video = await Video.create({
+        title, 
+        description, 
+        videoFile: videoUpload.url, 
+        thumbnail: thumbnailUpload.url, 
+        duration: videoUpload.duration, 
+        owner: req.user._id
+    });
     
     if(!video){
-        throw new ApiError(500, "Error creating video record in database!");
+        throw new ApiError(500, "Error publishing the video!");
     }
-    
-    return res.status(200).json(new ApiResponse(200, video, "Video uploaded successfully!"));
+
+    return res.status(200).json(new ApiResponse(200, video, "Video published successfully!"));
 });
 
 
