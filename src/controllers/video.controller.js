@@ -1,9 +1,10 @@
 import {asyncHandler} from '../utils/asyncHandler.js';
-import { isValidObjectId } from 'mongoose';
+import mongoose, { isValidObjectId } from 'mongoose';
 import {ApiError} from '../utils/ApiError.js';
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js';
 import {Video} from '../models/video.model.js';
 import {ApiResponse} from '../utils/ApiResponse.js';
+import { runAsTransaction } from '../utils/mongodbTransaction.js';
 
 
 // tested using postman -- fixed errors - working properly
@@ -160,36 +161,40 @@ const updateVideoThumbnail = asyncHandler(async (req, res) => {
 });
 
 
-
 const deleteVideo = asyncHandler(async (req, res) => {
     const {videoId} = req.params;
+    
+    if(!videoId || !isValidObjectId(videoId)){
+        throw new ApiError(400, "Invalid video id!");
+    }
     
     const video = await Video.findById(videoId).lean();
 
     if(!video){
-        throw new ApiError(400, "Video not found!");
+        throw new ApiError(404, "Video not found!");
     }
     
-    if(video.owner !== req.user._id){
-        throw new ApiError(400, "Unauthorised request!");
-    }
-    
-    const deleteVideo = await Video.findByIdAndDelete(videoId);
-    if(!deleteVideo){
-        throw new ApiError(500, "Error deleting video from database!");
+    if(!video.owner.equals(req.user._id)){
+        throw new ApiError(401, "Unauthorised request!");
     }
     
     const deleteThumbnailFromCloudinary = await deleteFromCloudinary(video.thumbnail);
     const deleteVideoFromCloudinary = await deleteFromCloudinary(video.videoFile);
     
     if(!deleteThumbnailFromCloudinary){
-        throw new ApiError(500, "Error deleting thumbnail from cloudinary!");
+        throw new ApiError(500, "Error removing the thumbnail!");
     }
 
     if(!deleteVideoFromCloudinary){
-        throw new ApiError(500, "Error deleting video from cloudinary!");
+        throw new ApiError(500, "Error removing the video!");
     }
-    
+
+    const deleteVideo = await Video.deleteOne({_id: videoId}).session(session);       
+
+    if(deleteVideo.deletedCount === 0){
+        throw new ApiError(500, "Error deleting the video!");
+    }
+
     return res.status(200).json(new ApiResponse(200, null, "Video deleted successfully!"));
 });
 
