@@ -202,10 +202,16 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 
 
+// tested using postman -- fixed bugs -- working fine
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const {videoId} = req.params;
+    
+    if(!videoId || isValidObjectId(videoId)){
+        throw new ApiError(400, "Invalid video id!");
+    }
 
-    const result = await Video.updateOne({_id: videoId}, {$bit: {isPublished: {xor: 1}}});                
+    // const result = await Video.updateOne({_id: videoId}, {$bit: {isPublished: {xor: 1}}}); // can't use it as xor only works with 0/1 but isPublished is boolean                
+    const result = await Video.updateOne({_id: videoId}, [{$set: {isPublished: {$not: "$isPublished"}}}]);
 
     if(result.matchedCount === 0){
         throw new ApiError(404, "Video not found!");        
