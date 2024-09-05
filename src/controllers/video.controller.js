@@ -4,7 +4,7 @@ import {ApiError} from '../utils/ApiError.js';
 import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js';
 import {Video} from '../models/video.model.js';
 import {ApiResponse} from '../utils/ApiResponse.js';
-import { runAsTransaction } from '../utils/mongodbTransaction.js';
+
 
 
 // tested using postman -- fixed errors - working properly
@@ -161,6 +161,8 @@ const updateVideoThumbnail = asyncHandler(async (req, res) => {
 });
 
 
+
+// tested using postman -- fixed errors -- working fine
 const deleteVideo = asyncHandler(async (req, res) => {
     const {videoId} = req.params;
     
@@ -179,7 +181,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
     }
     
     const deleteThumbnailFromCloudinary = await deleteFromCloudinary(video.thumbnail);
-    const deleteVideoFromCloudinary = await deleteFromCloudinary(video.videoFile);
+    const deleteVideoFromCloudinary = await deleteFromCloudinary(video.videoFile, 'video');
     
     if(!deleteThumbnailFromCloudinary){
         throw new ApiError(500, "Error removing the thumbnail!");
@@ -189,7 +191,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Error removing the video!");
     }
 
-    const deleteVideo = await Video.deleteOne({_id: videoId}).session(session);       
+    const deleteVideo = await Video.deleteOne({_id: videoId});       
 
     if(deleteVideo.deletedCount === 0){
         throw new ApiError(500, "Error deleting the video!");

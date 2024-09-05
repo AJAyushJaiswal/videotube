@@ -36,7 +36,7 @@ const uploadOnCloudinary = async (localFilePath) => {
 }
 
 
-const deleteFromCloudinary = async (url) => {
+const deleteFromCloudinary = async (url, resource_type='image') => {
     try{
         if(!url) return null;
         // "http://res.cloudinary.com/cloudburst/image/upload/v1722673407/dgt4h8zknlcmv9ujmu9v.jpg"
@@ -44,9 +44,9 @@ const deleteFromCloudinary = async (url) => {
 
         const publicId = url.substring(url.lastIndexOf('/')+1).split('.')[0];
 
-        const fileDeleted = await cloudinary.uploader.destroy(publicId);
+        const fileDeleted = await cloudinary.uploader.destroy(publicId, {resource_type});
         
-        if(!fileDeleted || fileDeleted.result !== 'ok'){
+        if(!fileDeleted || (fileDeleted.result !== 'ok' && fileDeleted.result !== 'not found')){
             throw new Error('Error deleting file from cloudinary!');
         }
 
