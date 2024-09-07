@@ -1,7 +1,7 @@
 {
-  "name": "chai-backend",
+  "name": "videotube",
   "version": "1.0.0",
-  "description": "a backend at chai aur code channel - youtube",
+  "description": "a platform for uploading, viewing and sharing videos",
   "main": "index.js",
   "type": "module",
   "scripts": {

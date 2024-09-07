@@ -1,9 +1,10 @@
 import {asyncHandler} from '../utils/asyncHandler.js';
 import mongoose, { isValidObjectId } from 'mongoose';
 import {ApiError} from '../utils/ApiError.js';
-import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js';
 import {Video} from '../models/video.model.js';
+import {User} from '../models/user.model.js';
 import {ApiResponse} from '../utils/ApiResponse.js';
+import { deleteFromCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js';
 
 
 
@@ -15,10 +16,17 @@ const getVideoById = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid video id!");
     }
     
-    const video = await Video.findById(videoId).select('-updatedAt -__v').lean();
+    const video = await Video.findByIdAndUpdate(videoId, {$inc: {views: 1}}, {new: true}).select('-isPublished -updateAt -__v').lean();
     
     if(!video){
         throw new ApiError(404, "Video not found!");
+    }
+    
+    if(req.user){
+        const addedToWatchHistory = await User.updateOne({_id: req.user._id}, {$push: {watchHistory: {videoId}}});
+        if(!addedToWatchHistory){
+            throw new ApiError(500, "Error adding video to watch history!");
+        }        
     }
     
     return res.status(200).json(new ApiResponse(200, video, "Video fetched successfully!"));

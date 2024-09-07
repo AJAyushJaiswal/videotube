@@ -33,8 +33,14 @@ const userSchema = new Schema(
             type: String, // cloudinary url
         },
         watchHistory: [{
-            type: Schema.Types.ObjectId,
-            ref: 'Video'
+            videoId: {
+                type: Schema.Types.ObjectId,
+                ref: 'Video'
+            },
+            watchedAt: {
+                type: Date,
+                default: new Date
+            }
         }],
         password: {
             type: String,
