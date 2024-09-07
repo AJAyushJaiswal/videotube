@@ -81,8 +81,9 @@ const publishVideo = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Error publishing the video!");
     }
 
-    return res.status(200).json(new ApiResponse(200, {video}, "Video published successfully!"));
+    return res.status(200).json(new ApiResponse(200, video, "Video published successfully!"));
 });
+
 
 
 // tested using postman -- fixed bugs -- working fine
@@ -119,8 +120,9 @@ const updateVideoDetails = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Error updating video details!");
     }
     
-    res.status(200).json(new ApiResponse(200, {video: updatedVideo}, "Video details updated successfully!"));
+    res.status(200).json(new ApiResponse(200, updatedVideo, "Video details updated successfully!"));
 });
+
 
 
 // tested using postman -- fixed bugs -- working fine
@@ -165,7 +167,7 @@ const updateVideoThumbnail = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Error deleting the old thumbnail!");
     }
     
-    return res.status(200).json(new ApiResponse(200, {video: updatedVideo}, "Thumbnail updated successfully!"));
+    return res.status(200).json(new ApiResponse(200, updatedVideo, "Thumbnail updated successfully!"));
 });
 
 

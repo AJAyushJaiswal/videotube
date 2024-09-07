@@ -248,7 +248,7 @@ export const changeCurrentPassword = asyncHandler(async (req, res) => {
 
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
-    res.status(200).json(new ApiResponse(200, {user: req.user}, "Current user fetched successfully"));
+    res.status(200).json(new ApiResponse(200, req.user, "Current user fetched successfully"));
 });
 
 
@@ -284,7 +284,7 @@ export const updateAccountDetails = asyncHandler(async (req, res) => {
     }
 
 
-    return res.status(200).json(new ApiResponse(200, {user: updatedUser}, "Account details updated successfully"));
+    return res.status(200).json(new ApiResponse(200, updatedUser, "Account details updated successfully"));
 });
 
 
@@ -443,7 +443,6 @@ export const getUserChannelProfile = asyncHandler( async (req, res) => {
             }
         }
     ]);
-    console.log(channel); 
     
     if(channel.length === 0){
         throw new ApiError(404, "Channel not found!");
