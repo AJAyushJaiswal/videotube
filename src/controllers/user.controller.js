@@ -79,7 +79,7 @@ export const registerUser = asyncHandler( async (req, res) => {
     const user = await User.create({username, email, fullName, avatar: avatar.url, coverImage: coverImage?.url || "", password});
 
     const userCreated = await User.findById(user._id).select(
-        "-password -refreshToken -updatedAt"
+        "-watchHistroy -password -refreshToken -updatedAt -__v"
     );
     
     if(!userCreated){
@@ -123,7 +123,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     // TODO: generate access and refresh tokens and store refreshToken in database
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id);  
 
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken -updatedAt");
+    const loggedInUser = await User.findById(user._id).select("-watchHistory -password -refreshToken -updatedAt -__v");
     
     // TODO: return tokens using secureCookie and a response
     const options = {
@@ -277,7 +277,7 @@ export const updateAccountDetails = asyncHandler(async (req, res) => {
             }
         }, 
         {new: true}
-    ).select("-password -refreshToken -updatedAt");
+    ).select("-watchHistory -password -refreshToken -updatedAt -__v");
     
     if(!updatedUser){
         throw new ApiError(500, "Error updating account details in database");
@@ -320,7 +320,7 @@ export const updateUserAvatar = asyncHandler(async (req, res) => {
             }
         },
         {new: true}
-    ).select("-password -refreshToken -updatedAt");
+    ).select("-watchHistory -password -refreshToken -updatedAt -__v");
 
     if(!user){
         throw new Error(500, "Error updating avatar in database");
@@ -363,7 +363,7 @@ export const updateUserCoverImage = asyncHandler(async (req, res) => {
             }
         },
         {new: true}
-    ).select("-password -refreshToken -updatedAt");
+    ).select("-watchHistory -password -refreshToken -updatedAt -__v");
 
     
     if(!user){
