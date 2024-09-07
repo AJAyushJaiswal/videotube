@@ -24,7 +24,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     
     if(req.user){
         const addedToWatchHistory = await User.updateOne({_id: req.user._id}, {$push: {watchHistory: {videoId}}});
-        if(!addedToWatchHistory){
+        if(addedToWatchHistory.modifiedCount !== 0){
             throw new ApiError(500, "Error adding video to watch history!");
         }        
     }
@@ -205,6 +205,12 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
     if(deleteVideo.deletedCount === 0){
         throw new ApiError(500, "Error deleting the video!");
+    }
+    
+    const deleteFromWatchHistoryResult = await User.updateMany({}, {$pull: {watchHistory: {videoId}}});
+    
+    if(deleteFromWatchHistoryResult.deletedCount !== 0){
+        throw new ApiError(500, "Error removing video from watch history of users!");
     }
 
     return res.status(200).json(new ApiResponse(200, null, "Video deleted successfully!"));
