@@ -116,7 +116,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     }
 
     // TODO: check if the password is correct
-    if(!user.isPasswordCorrect(password)){
+    if(!await user.isPasswordCorrect(password)){
         throw new ApiError(401, "Invalid user credentials");
     } 
 
@@ -128,12 +128,16 @@ export const loginUser = asyncHandler(async (req, res) => {
     // TODO: return tokens using secureCookie and a response
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite: 'Strict'
     }
+
+    const accessTokenMaxAge = 30 * 60 * 1000;
+    const refreshTokenMaxAge = 3 * 24 * 60 * 60 * 1000;
     
     return res.status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, {...options, maxAge: accessTokenMaxAge})
+    .cookie("refreshToken", refreshToken, {...options, maxAge: refreshTokenMaxAge})
     .json(new ApiResponse(200, {user: loggedInUser, accessToken, refreshToken}, "User logged in succesfully"));
 });
 
@@ -182,7 +186,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
         }
 
         
-        const user = await User.findById(decodedToken?._id).select("refreshToken _id").lean();
+        const user = await User.findById(decodedToken?._id).select("refreshToken").lean();
        
         if(!user){
             throw new ApiError(401, "Invalid refresh token");
@@ -202,10 +206,13 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
             sameSite: true
         }
         
+        const accessTokenMaxAge = 30 * 60 * 1000;
+        const refreshTokenMaxAge = 3 * 24 * 60 * 60 * 1000;
+        
         res.status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", newRefreshToken, options)
-        .json(new ApiResponse(200, {accessToken, refreshToken: newRefreshToken}, "Access token refreshed"));
+        .cookie("accessToken", accessToken, {...options, maxAge: accessTokenMaxAge})
+        .cookie("refreshToken", newRefreshToken, {options, maxAge: refreshTokenMaxAge})
+        .json(new ApiResponse(200, {accessToken, refreshToken: newRefreshToken}, "Access token refreshed successfully!"));
     }
     catch(error){
         if(error instanceof jwt.TokenExpiredError){
@@ -214,7 +221,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
         else if(error instanceof jwt.JsonWebTokenError){
             throw new ApiError(401, "Invalid refresh token!");
         }
-        throw new ApiError(500, error?.message || "Error during refreshing access token");
+        throw new ApiError(error?.statusCode || 500, error?.message || "Error during refreshing access token!");
     }
 });
 
